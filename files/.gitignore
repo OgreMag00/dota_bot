@@ -1,0 +1,5 @@
+.env
+__pycache__
+db_dota.sqlite3
+app/__pycache__
+app/database/__pycache__
