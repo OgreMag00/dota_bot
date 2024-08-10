@@ -12,16 +12,20 @@ from aiogram.exceptions import TelegramBadRequest
  
 
 async def parse(url):
-
+    
     res = await asyncio.to_thread(requests.get, url)
-    return res.json()
+    print(res.json())
+    if res.status_code == 200:
+        return res.json()
+    else:
+        return {'result':'Сервер не отвечает. Ведутся технические работы'}
 
 
 router = Router()
 
 
 
-@router.message(CommandStart())
+@router.message((CommandStart()) or (F.text=='Главное меню'))
 async def start_command(message: Message):
     if await rq.check_user(message.from_user.id):
         
@@ -127,46 +131,58 @@ async def second(message: Message):
 async def thethy(message: Message, state: FSMContext):
     await message.delete()
     await state.set_state(Hwr.heroname)
-    await message.answer(text=f'Отправьте имя героя\nпример: lina')
+    await message.answer(text=f'Отправьте имя героя\nпример: lina', reply_markup=kb.zero)
     
   
 @router.message(Hwr.heroname)
 async def thethys(message: Message, state: FSMContext):
     dota_id = await rq.get_dota_id(message.from_user.id)
-    heroname = message.text
-    mes = await message.answer(text=f'Обрабатываем ваш запрос\nПожалуйста, подождите 😇')
 
-    text = await parse(f'http://77.73.132.75/DotaApi.DOTAApi/analyzeHeroWinRatesAndPredictSuccess?playerid={dota_id}&heroname={heroname}')
+    if message.text != 'Главное меню':
+
+        heroname = message.text
+        mes = await message.answer(text=f'Обрабатываем ваш запрос\nПожалуйста, подождите 😇')
+
+        text = await parse(f'http://77.73.132.75/DotaApi.DOTAApi/analyzeHeroWinRatesAndPredictSuccess?playerid={dota_id}&heroname={heroname}')
     
-    await bot.delete_message(message.chat.id, mes.message_id)
+        await bot.delete_message(message.chat.id, mes.message_id)
 
-    await message.answer(text=text.get('result'), reply_markup=kb.main_panel)
-    await state.clear()
+        await message.answer(text=text.get('result'), reply_markup=kb.main_panel)
+        await state.clear()
+    else:
+        await message.answer(text=f'Ваш DOTA ID: {dota_id}', reply_markup=kb.main_panel)
+        await state.clear()
+
+
     
 @router.message(F.text == 'Оптимальный драфт героев')
 async def forthy(message: Message, state: FSMContext):
     await message.delete()
 
     await state.set_state(Hwr.heroname)
-    await message.answer(text=f'Оправьте имена героев противника через запятую\nпример: slark, anti-mag, lion, witch-doctor, lina')
+    await message.answer(text=f'Оправьте имена героев противника через запятую\nпример: slark, anti-mag, lion, witch-doctor, lina', reply_markup=kb.zero)
     
 
 @router.message(Odh.heronames)
 async def forthys(message: Message, state: FSMContext):
-
-    heronames = list((message.text).split(','))
-    q = ''
-    async for name in heronames:
-        q += f'{name}%2C%20'
-    mes = await message.answer(text=f'Обрабатываем ваш запрос\nПожалуйста, подождите 😇')
-
     dota_id = await rq.get_dota_id(message.from_user.id)
-    text = await parse(f'http://77.73.132.75/DotaApi.DOTAApi/OptimalDraftHeroRecommender?playerid={dota_id}&Enemydraft={q}')
-    await bot.delete_message(message.chat.id, mes.message_id)
 
-    await message.answer(text=text.get('result'), reply_markup=kb.main_panel)
-    await state.clear() 
-    
+    if message.text != 'Главное меню':
+        heronames = list((message.text).split(','))
+        q = ''
+        async for name in heronames:
+            q += f'{name}%2C%20'
+        mes = await message.answer(text=f'Обрабатываем ваш запрос\nПожалуйста, подождите 😇')
+
+        text = await parse(f'http://77.73.132.75/DotaApi.DOTAApi/OptimalDraftHeroRecommender?playerid={dota_id}&Enemydraft={q}')
+        await bot.delete_message(message.chat.id, mes.message_id)
+
+        await message.answer(text=text.get('result'), reply_markup=kb.main_panel)
+        await state.clear() 
+    else:
+        await message.answer(text=f'Ваш DOTA ID: {dota_id}', reply_markup=kb.main_panel)
+        await state.clear()
+
 
 @router.message()
 async def star(message: Message):
