@@ -1,5 +1,11 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup,InlineKeyboardButton
 
+zero = ReplyKeyboardMarkup(keyboard=[
+    [KeyboardButton(text='Главное меню')],],
+    resize_keyboard=True, 
+    input_field_placeholder='Выберите пункт меню',
+    )
+
 main_panel = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text='Анализ истории игр'), KeyboardButton(text='Анализ винрейта')], # first row
     [KeyboardButton(text='Прогноз победы на герое'), KeyboardButton(text='Оптимальный драфт героев')],
